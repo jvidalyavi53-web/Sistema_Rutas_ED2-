@@ -1,0 +1,157 @@
+{
+  "ciudades": [
+    {
+      "nombre": "La Paz",
+      "tipo": "capital",
+      "lat": -16.5,
+      "lon": -68.15
+    },
+    {
+      "nombre": "Cochabamba",
+      "tipo": "capital",
+      "lat": -17.3895,
+      "lon": -66.1568
+    },
+    {
+      "nombre": "Santa Cruz",
+      "tipo": "capital",
+      "lat": -17.7833,
+      "lon": -63.1821
+    },
+    {
+      "nombre": "Chuquisaca",
+      "tipo": "capital",
+      "lat": -19.0333,
+      "lon": -65.2627
+    },
+    {
+      "nombre": "Oruro",
+      "tipo": "normal",
+      "lat": -17.9833,
+      "lon": -67.15
+    },
+    {
+      "nombre": "Potosí",
+      "tipo": "normal",
+      "lat": -19.5836,
+      "lon": -65.7531
+    },
+    {
+      "nombre": "Tarija",
+      "tipo": "normal",
+      "lat": -21.5355,
+      "lon": -64.7296
+    },
+    {
+      "nombre": "Beni",
+      "tipo": "turistica",
+      "lat": -14.8333,
+      "lon": -64.9
+    },
+    {
+      "nombre": "Pando",
+      "tipo": "turistica",
+      "lat": -11.0267,
+      "lon": -68.7692
+    },
+    {
+      "nombre": "Pailon",
+      "tipo": "normal",
+      "lat": -17.60151,
+      "lon": -62.66883
+    }
+  ],
+  "aristas": [
+    {
+      "origen": "La Paz",
+      "destino": "Oruro",
+      "distancia": 230,
+      "tiempo": 180,
+      "peaje": 10
+    },
+    {
+      "origen": "La Paz",
+      "destino": "Beni",
+      "distancia": 525,
+      "tiempo": 480,
+      "peaje": 5
+    },
+    {
+      "origen": "Cochabamba",
+      "destino": "Oruro",
+      "distancia": 204,
+      "tiempo": 240,
+      "peaje": 15
+    },
+    {
+      "origen": "Cochabamba",
+      "destino": "Santa Cruz",
+      "distancia": 473,
+      "tiempo": 420,
+      "peaje": 20
+    },
+    {
+      "origen": "Cochabamba",
+      "destino": "Chuquisaca",
+      "distancia": 410,
+      "tiempo": 480,
+      "peaje": 15
+    },
+    {
+      "origen": "Cochabamba",
+      "destino": "Beni",
+      "distancia": 560,
+      "tiempo": 600,
+      "peaje": 8
+    },
+    {
+      "origen": "Santa Cruz",
+      "destino": "Beni",
+      "distancia": 502,
+      "tiempo": 540,
+      "peaje": 10
+    },
+    {
+      "origen": "Santa Cruz",
+      "destino": "Tarija",
+      "distancia": 650,
+      "tiempo": 720,
+      "peaje": 25
+    },
+    {
+      "origen": "Santa Cruz",
+      "destino": "Pailon",
+      "distancia": 100,
+      "tiempo": 30,
+      "peaje": 10
+    },
+    {
+      "origen": "Chuquisaca",
+      "destino": "Potosí",
+      "distancia": 165,
+      "tiempo": 180,
+      "peaje": 5
+    },
+    {
+      "origen": "Chuquisaca",
+      "destino": "Tarija",
+      "distancia": 250,
+      "tiempo": 300,
+      "peaje": 12
+    },
+    {
+      "origen": "Oruro",
+      "destino": "Potosí",
+      "distancia": 237,
+      "tiempo": 240,
+      "peaje": 8
+    },
+    {
+      "origen": "Beni",
+      "destino": "Pando",
+      "distancia": 598,
+      "tiempo": 720,
+      "peaje": 0
+    }
+  ]
+}

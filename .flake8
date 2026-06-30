@@ -1,0 +1,13 @@
+[flake8]
+# Longitud maxima de linea segun PEP 8 (coincide con black).
+max-line-length = 79
+# Compatibilidad con black: E203 (espacio antes de ':') y W503 (salto de
+# linea antes de un operador binario) chocan con el formato que produce black.
+extend-ignore = E203, W503
+exclude =
+    .venv,
+    venv,
+    __pycache__,
+    .git,
+    build,
+    dist

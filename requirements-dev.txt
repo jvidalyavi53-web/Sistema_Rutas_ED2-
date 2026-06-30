@@ -1,0 +1,6 @@
+# Herramientas de desarrollo para validar el estilo PEP 8.
+# Instalar con:  py -m pip install -r requirements-dev.txt
+# Validar:       py -m flake8 app run.py config.py _smoke_geo.py _smoke_routing.py
+#                py -m black --check app run.py config.py _smoke_geo.py _smoke_routing.py
+flake8>=7.0
+black>=24.0

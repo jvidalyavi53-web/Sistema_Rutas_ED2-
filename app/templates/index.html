@@ -1,0 +1,322 @@
+{% extends "base.html" %}
+{% block title %}Sistema de Rutas · Grafos{% endblock %}
+
+{% block topbar_actions %}
+    <button class="btn btn-ghost btn-sm" onclick="elegirEnMapa(true)">
+        <svg class="ic"><use href="#ic-pin"/></svg> Ciudad
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="mostrarModal('modalRuta')">
+        <svg class="ic"><use href="#ic-road"/></svg> Carretera
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="mostrarMatriz()">
+        <svg class="ic"><use href="#ic-grid"/></svg> Matriz
+    </button>
+    <button class="btn btn-ghost btn-sm" onclick="restaurarEjemplo()">
+        <svg class="ic"><use href="#ic-refresh"/></svg> Restaurar
+    </button>
+{% endblock %}
+
+{% block content %}
+<section class="dashboard">
+    <!-- Columna de control -->
+    <aside class="control-col">
+        <div class="panel">
+            <div class="panel-head">
+                <h2><svg class="ic"><use href="#ic-route"/></svg> Calcular ruta</h2>
+            </div>
+            <form action="{{ url_for('main.calcular_ruta') }}" method="post" class="form-grid">
+                <div class="field">
+                    <label class="form-label">Origen</label>
+                    <select name="origen" id="selOrigen" class="form-select" required>
+                        {% for c in ciudades %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="form-label">Destino</label>
+                    <select name="destino" id="selDestino" class="form-select" required>
+                        {% for c in ciudades %}<option value="{{ c }}"{% if loop.index == 2 %} selected{% endif %}>{{ c }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="form-label">Algoritmo</label>
+                    <select name="algoritmo" id="selAlgoritmo" class="form-select" onchange="toggleCriterio()">
+                        <option value="dijkstra">Dijkstra · menor costo</option>
+                        <option value="bfs">BFS · menos paradas</option>
+                    </select>
+                </div>
+                <div class="field" id="campoCriterio">
+                    <label class="form-label">Criterio (Dijkstra)</label>
+                    <select name="criterio" id="selCriterio" class="form-select">
+                        <option value="distancia">Menor distancia</option>
+                        <option value="tiempo">Menor tiempo</option>
+                        <option value="peaje">Menor peaje</option>
+                    </select>
+                </div>
+                <div class="actions">
+                    <button type="submit" class="btn btn-primary">
+                        <svg class="ic"><use href="#ic-route"/></svg> Calcular ruta
+                    </button>
+                    <button type="button" class="btn btn-accent" onclick="calcularDFS()">
+                        <svg class="ic"><use href="#ic-list"/></svg> Todas las rutas (DFS)
+                    </button>
+                    <button type="button" class="btn btn-ghost" onclick="compararAlgoritmos()">
+                        <svg class="ic"><use href="#ic-compare"/></svg> Comparar algoritmos
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="panel">
+            <div class="panel-head"><h2><svg class="ic"><use href="#ic-info"/></svg> Tipos de ciudad</h2></div>
+            <ul class="legend">
+                <li><span class="dot" style="--c:#6366f1"></span> Capital</li>
+                <li><span class="dot" style="--c:#0ea5e9"></span> Normal</li>
+                <li><span class="dot" style="--c:#10b981"></span> Turística</li>
+                <li><span class="dot" style="--c:#f59e0b"></span> Comercial</li>
+                <li><span class="dot" style="--c:#8b5cf6"></span> Industrial</li>
+            </ul>
+            <p class="hint">
+                <strong>Dijkstra</strong> halla la ruta de menor costo según el criterio ·
+                <strong>BFS</strong> la de menos paradas (sin pesos) ·
+                <strong>DFS</strong> enumera todas las rutas posibles.
+            </p>
+        </div>
+    </aside>
+
+    <!-- Columna del mapa -->
+    <div class="map-col">
+        <div class="panel panel-map">
+            <div class="panel-head">
+                <h2><svg class="ic"><use href="#ic-map"/></svg> Mapa real</h2>
+                <span class="hint hint-inline">Clic en una ciudad para ver detalles · arrastra para mover · rueda para zoom</span>
+            </div>
+            <div id="map"></div>
+        </div>
+    </div>
+</section>
+
+<!-- Estadísticas -->
+<section class="stats">
+    <div class="stat-card">
+        <div class="stat-value" id="total-ciudades">0</div>
+        <div class="stat-label">Ciudades</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="total-rutas">0</div>
+        <div class="stat-label">Carreteras</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="distancia-promedio">0</div>
+        <div class="stat-label">Distancia prom. (km)</div>
+    </div>
+    <div class="stat-card">
+        <div class="stat-value" id="tiempo-promedio">0</div>
+        <div class="stat-label">Tiempo prom. (min)</div>
+    </div>
+</section>
+
+<!-- Gestión -->
+<section class="manage">
+    <div class="panel">
+        <div class="panel-head"><h2><svg class="ic"><use href="#ic-pin"/></svg> Ciudades</h2></div>
+        <div class="btn-stack">
+            <button class="btn btn-success" onclick="elegirEnMapa(true)"><svg class="ic"><use href="#ic-pin"/></svg> Nueva ciudad en el mapa</button>
+            <button class="btn btn-ghost" onclick="mostrarModal('modalCiudad')"><svg class="ic"><use href="#ic-plus"/></svg> Agregar por formulario</button>
+            <button class="btn btn-danger" onclick="mostrarModal('modalEliminarCiudad')"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar ciudad</button>
+            <button class="btn btn-ghost" onclick="listarCiudades()"><svg class="ic"><use href="#ic-list"/></svg> Listar ciudades</button>
+        </div>
+    </div>
+    <div class="panel">
+        <div class="panel-head"><h2><svg class="ic"><use href="#ic-road"/></svg> Carreteras</h2></div>
+        <div class="btn-stack">
+            <button class="btn btn-success" onclick="mostrarModal('modalRuta')"><svg class="ic"><use href="#ic-plus"/></svg> Agregar carretera</button>
+            <button class="btn btn-danger" onclick="mostrarModal('modalEliminarRuta')"><svg class="ic"><use href="#ic-trash"/></svg> Eliminar carretera</button>
+            <button class="btn btn-ghost" onclick="listarRutas()"><svg class="ic"><use href="#ic-list"/></svg> Listar carreteras</button>
+        </div>
+    </div>
+</section>
+
+<!-- ===================== MODALES ===================== -->
+<!-- Agregar Ciudad -->
+<div class="modal fade" id="modalCiudad" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Agregar ciudad</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <form id="formCiudad">
+                <div class="field">
+                    <label class="form-label">Nombre</label>
+                    <input type="text" class="form-control" name="nombre" required>
+                </div>
+                <div class="field">
+                    <label class="form-label">Tipo</label>
+                    <select class="form-select" name="tipo">
+                        <option value="normal">Normal</option>
+                        <option value="capital">Capital</option>
+                        <option value="turistica">Turística</option>
+                        <option value="comercial">Comercial</option>
+                        <option value="industrial">Industrial</option>
+                    </select>
+                </div>
+                <div class="grid-2">
+                    <div class="field">
+                        <label class="form-label">Latitud</label>
+                        <input type="number" step="any" class="form-control" id="ciudadLat" name="lat" placeholder="-16.5">
+                    </div>
+                    <div class="field">
+                        <label class="form-label">Longitud</label>
+                        <input type="number" step="any" class="form-control" id="ciudadLon" name="lon" placeholder="-68.15">
+                    </div>
+                </div>
+                <button type="button" class="btn btn-ghost btn-sm" onclick="elegirEnMapa()">
+                    <svg class="ic"><use href="#ic-pin"/></svg> Elegir ubicación en el mapa
+                </button>
+                <p class="hint">Sin coordenadas la ciudad existe en el grafo pero no se dibuja en el mapa real.</p>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="agregarCiudad()">Agregar</button>
+        </div>
+    </div></div>
+</div>
+
+<!-- Eliminar Ciudad -->
+<div class="modal fade" id="modalEliminarCiudad" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Eliminar ciudad</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <div class="field">
+                <label class="form-label">Ciudad a eliminar</label>
+                <select class="form-select" id="selectEliminarCiudad">
+                    {% for c in ciudades %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="alert-soft">Se eliminará la ciudad y todas sus carreteras.</div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger" onclick="eliminarCiudad()">Eliminar</button>
+        </div>
+    </div></div>
+</div>
+
+<!-- Agregar Carretera -->
+<div class="modal fade" id="modalRuta" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Agregar carretera</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <form id="formRuta">
+                <div class="grid-2">
+                    <div class="field">
+                        <label class="form-label">Origen</label>
+                        <select class="form-select" name="origen" required>
+                            {% for c in ciudades %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+                        </select>
+                    </div>
+                    <div class="field">
+                        <label class="form-label">Destino</label>
+                        <select class="form-select" name="destino" required>
+                            {% for c in ciudades %}<option value="{{ c }}"{% if loop.index == 2 %} selected{% endif %}>{{ c }}</option>{% endfor %}
+                        </select>
+                    </div>
+                </div>
+                <div class="grid-3">
+                    <div class="field">
+                        <label class="form-label">Distancia (km)</label>
+                        <input type="number" class="form-control" name="distancia" min="1" required>
+                    </div>
+                    <div class="field">
+                        <label class="form-label">Tiempo (min)</label>
+                        <input type="number" class="form-control" name="tiempo" min="1" required>
+                    </div>
+                    <div class="field">
+                        <label class="form-label">Peaje (Bs)</label>
+                        <input type="number" class="form-control" name="peaje" min="0" value="0" required>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-primary" onclick="agregarRuta()">Agregar</button>
+        </div>
+    </div></div>
+</div>
+
+<!-- Eliminar Carretera -->
+<div class="modal fade" id="modalEliminarRuta" tabindex="-1">
+    <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title">Eliminar carretera</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body">
+            <div class="grid-2">
+                <div class="field">
+                    <label class="form-label">Origen</label>
+                    <select class="form-select" id="selectEliminarOrigen">
+                        {% for c in ciudades %}<option value="{{ c }}">{{ c }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="field">
+                    <label class="form-label">Destino</label>
+                    <select class="form-select" id="selectEliminarDestino">
+                        {% for c in ciudades %}<option value="{{ c }}"{% if loop.index == 2 %} selected{% endif %}>{{ c }}</option>{% endfor %}
+                    </select>
+                </div>
+            </div>
+            <div class="alert-soft">Se eliminará la carretera entre estas dos ciudades.</div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" class="btn btn-danger" onclick="eliminarRuta()">Eliminar</button>
+        </div>
+    </div></div>
+</div>
+
+<!-- Modal genérico de resultados -->
+<div class="modal fade" id="modalResultados" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header"><h5 class="modal-title" id="tituloResultados">Resultados</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
+        <div class="modal-body" id="cuerpoResultados"></div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+    </div></div>
+</div>
+
+<!-- Modal Matriz -->
+<div class="modal fade" id="modalMatriz" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-scrollable"><div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title">Matriz de adyacencia</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+            <div class="matriz-toolbar">
+                <label class="form-label mb-0">Criterio</label>
+                <select class="form-select w-auto" id="matrizCriterio" onchange="mostrarMatriz()">
+                    <option value="distancia">Distancia (km)</option>
+                    <option value="tiempo">Tiempo (min)</option>
+                    <option value="peaje">Peaje (Bs)</option>
+                </select>
+                <span class="hint">El valor 0 indica que no hay carretera directa.</span>
+            </div>
+            <div class="table-responsive" id="cuerpoMatriz"></div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-ghost" data-bs-dismiss="modal">Cerrar</button>
+        </div>
+    </div></div>
+</div>
+
+<!-- Contenedor de notificaciones -->
+<div class="toast-stack" id="toastStack"></div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+<script src="{{ url_for('static', filename='js/app.js') }}"></script>
+{% endblock %}

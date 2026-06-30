@@ -1,0 +1,25 @@
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+.venv/
+venv/
+env/
+ENV/
+
+.pytest_cache/
+.mypy_cache/
+
+# Variables de entorno (contienen la clave de MapTiler)
+.env
+
+# Caché de geometrías viales (OSRM); se regenera bajo demanda
+*_rutas_viales.json
+
+.idea/
+.vscode/
+.claude/
+
+dist/
+build/

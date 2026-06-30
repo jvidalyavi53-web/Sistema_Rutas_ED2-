@@ -1,0 +1,7 @@
+# Configuracion de herramientas de estilo (PEP 8).
+# black formatea el codigo; flake8 (ver .flake8) valida el cumplimiento.
+
+[tool.black]
+# Longitud maxima de linea segun PEP 8.
+line-length = 79
+target-version = ["py310", "py311", "py312", "py313"]

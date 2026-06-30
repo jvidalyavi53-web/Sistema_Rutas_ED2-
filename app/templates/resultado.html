@@ -1,0 +1,116 @@
+{% extends "base.html" %}
+{% block title %}Resultado · Sistema de Rutas{% endblock %}
+
+{% block topbar_actions %}
+    <a class="btn btn-ghost btn-sm" href="{{ url_for('main.index') }}">
+        <svg class="ic"><use href="#ic-back"/></svg> Volver
+    </a>
+{% endblock %}
+
+{% block content %}
+<section class="result">
+    <div class="panel result-hero">
+        <div class="result-od">
+            <span class="od-city">{{ origen }}</span>
+            <svg class="ic od-arrow"><use href="#ic-route"/></svg>
+            <span class="od-city">{{ destino }}</span>
+        </div>
+
+        <span class="badge-algo {{ 'is-bfs' if algoritmo == 'bfs' else 'is-dijkstra' }}">
+            {% if algoritmo == 'bfs' %}
+                BFS · menos paradas
+            {% else %}
+                Dijkstra ·
+                {% if criterio == 'distancia' %}menor distancia
+                {% elif criterio == 'tiempo' %}menor tiempo
+                {% else %}menor peaje{% endif %}
+            {% endif %}
+        </span>
+
+        {% if error %}
+            <div class="alert-error">{{ error }}</div>
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary">Intentar de nuevo</a>
+        {% else %}
+            <div class="result-path">
+                {% for ciudad in camino %}
+                    <span class="path-node">{{ ciudad }}</span>{% if not loop.last %}<span class="path-sep">→</span>{% endif %}
+                {% endfor %}
+            </div>
+
+            {% if detalle %}
+            <div class="metrics">
+                <div class="metric {{ 'is-best' if algoritmo == 'dijkstra' and criterio == 'distancia' else '' }}">
+                    <div class="metric-value">{{ detalle.total.distancia }}</div>
+                    <div class="metric-label">km totales</div>
+                </div>
+                <div class="metric {{ 'is-best' if algoritmo == 'dijkstra' and criterio == 'tiempo' else '' }}">
+                    <div class="metric-value">{{ detalle.total.tiempo }}</div>
+                    <div class="metric-label">min totales</div>
+                </div>
+                <div class="metric {{ 'is-best' if algoritmo == 'dijkstra' and criterio == 'peaje' else '' }}">
+                    <div class="metric-value">{{ detalle.total.peaje }}</div>
+                    <div class="metric-label">Bs totales</div>
+                </div>
+            </div>
+            <p class="hint text-center">
+                {{ camino|length - 1 }} tramo(s) · {{ (camino|length - 2) if camino|length > 2 else 0 }} parada(s) intermedia(s)
+            </p>
+            {% endif %}
+        {% endif %}
+    </div>
+
+    {% if not error and detalle and detalle.tramos %}
+    <div class="panel">
+        <div class="panel-head"><h2><svg class="ic"><use href="#ic-list"/></svg> Detalle por tramo</h2></div>
+        <div class="table-responsive">
+            <table class="data-table">
+                <thead>
+                    <tr><th>#</th><th>Desde</th><th>Hasta</th><th>Distancia</th><th>Tiempo</th><th>Peaje</th></tr>
+                </thead>
+                <tbody>
+                    {% for t in detalle.tramos %}
+                    <tr>
+                        <td>{{ loop.index }}</td>
+                        <td>{{ t.origen }}</td>
+                        <td>{{ t.destino }}</td>
+                        <td>{{ t.distancia }} km</td>
+                        <td>{{ t.tiempo }} min</td>
+                        <td>{{ t.peaje }} Bs</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot>
+                    <tr>
+                        <td colspan="3">TOTAL</td>
+                        <td>{{ detalle.total.distancia }} km</td>
+                        <td>{{ detalle.total.tiempo }} min</td>
+                        <td>{{ detalle.total.peaje }} Bs</td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="panel panel-map">
+        <div class="panel-head">
+            <h2><svg class="ic"><use href="#ic-map"/></svg> Visualización</h2>
+            <span class="hint hint-inline">Ruta resaltada en <span class="route-chip">rosa</span> sobre el mapa</span>
+        </div>
+        <div id="map"></div>
+        <div class="result-foot">
+            <a href="{{ url_for('main.index') }}" class="btn btn-primary"><svg class="ic"><use href="#ic-route"/></svg> Calcular otra ruta</a>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    const rutaCamino = {{ camino|tojson if camino else '[]' }};
+    const rutaCriterio = "{{ criterio if criterio else '' }}";
+    const rutaOrigen = "{{ origen if origen else '' }}";
+    const rutaDestino = "{{ destino if destino else '' }}";
+</script>
+<script src="{{ url_for('static', filename='js/map.js') }}"></script>
+{% endblock %}
